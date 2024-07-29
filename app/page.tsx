@@ -1,6 +1,8 @@
 "use client";
 
 import React, { useState } from "react";
+import ReactMarkdown from "react-markdown";
+import styles from './styles/top.module.css';
 
 const Page: React.FC = () => {
   const [alcoholType, setAlcoholType] = useState<string>('');
@@ -17,12 +19,13 @@ const Page: React.FC = () => {
   const handlePairingStart = async () => {
     if (!alcoholType || (!dishName && !dishImage)) {
       setPairingResult('お酒の種類を選択後、料理名または料理の画像を入力してください。');
+      scrollToElement("#pairngResult");
       return;
     }
 
     // formDataへdishName, dishImageを追加
     const formData = new FormData(); 
-    formData.append('text', `お酒の種類: ${alcoholType}, 料理: ${dishName || '画像あり'}. このお酒と料理の最適なペアリングを提案してください。お酒の名前と特徴を含めてください。`);
+    formData.append('text', `お酒の種類: ${alcoholType}, 料理: ${dishName || '画像あり'}. このお酒と料理の最適なペアリングを提案してください。必ず お酒の個別名 特徴 ペアリング理由をそれぞれ4つ出力。`);
     if (dishImage) {
       formData.append('image', dishImage);
     }
@@ -35,24 +38,41 @@ const Page: React.FC = () => {
         body: formData
       });
       const data = await response.json();
-      setPairingResult(data.message);
+      let responseText = data.message.replace("/\*/g", "");
+      setPairingResult(responseText);
+      scrollToElement("#pairngResult");
     } catch (error) {
       console.error('Error:', error);
       setPairingResult('ペアリング結果の取得に失敗しました。');
+      scrollToElement("#pairngResult");
     } finally {
       setIsLoading(false);
     }
+
+    
+  };
+
+  const scrollToElement = (id: string) => {
+    // 表示されたDomにスクロールするため30msをあける
+    setTimeout(() => {
+      if (typeof window !== 'undefined') {
+        const element = document.getElementById(id);
+        if (element) {
+          element.scrollIntoView({ behavior: 'smooth' });
+        }
+      }
+    }, 30);
   };
 
   return (
     <div className="bg-white min-h-screen font-shippori-mincho text-black">
-      <h1 className="text-4xl text-center py-8 font-bold">日本独自のお酒ペアリングサービス</h1>
-      
-      <div className="w-full mb-8">
-        <img src="https://ucarecdn.com/7b55e7c7-48d7-4d6f-9770-a97404b6be5e/-/format/auto/" alt="日本酒を優雅に注ぐ様子" className="w-full object-cover" />
-      </div>
+      <h1 className="text-4xl text-center py-8 font-bold"><span className={styles.title}>日本独自のお酒ペアリングサービス</span></h1>
+    
       
       <div className="max-w-2xl mx-auto px-4">
+        <div className="w-full mb-8">
+          <img src="https://ucarecdn.com/7b55e7c7-48d7-4d6f-9770-a97404b6be5e/-/format/auto/" alt="日本酒を優雅に注ぐ様子" className="w-full object-cover" />
+        </div>
         <div className="mb-6">
           <label className="block mb-2 text-lg">お酒の種類:</label>
           <div className="flex space-x-4">
@@ -83,16 +103,18 @@ const Page: React.FC = () => {
           <input type="file" name="dishImage" onChange={handleImageUpload} accept="image/*" className="w-full p-2 border border-gray-300 rounded bg-white" />
         </div>
         
-        <button onClick={handlePairingStart} disabled={isLoading} className="w-full bg-black text-white mb-8 py-3 rounded hover:bg-gray-800 transition duration-300">
+        <button onClick={handlePairingStart} disabled={isLoading} className="w-full bg-black text-white mb-8 py-3 rounded text-2xl hover:bg-gray-800 transition duration-300">
           {isLoading ? 'ペアリング中...' : 'ペアリングスタート'}
         </button>
         
-        {pairingResult && (
-          <div className="mb-8 p-4 border border-gray-300 rounded bg-white">
-            <h2 className="text-2xl mb-4">ペアリング結果</h2>
-            <p className="whitespace-pre-wrap">{pairingResult}</p>
-          </div>
-        )}
+        <div id="#pairngResult">
+          {pairingResult && (
+            <div className="mb-8 p-4 border border-gray-300 rounded bg-white">
+              <h2 className="text-2xl mb-4">ペアリング結果</h2>
+              <p className="whitespace-pre-wrap"><ReactMarkdown>{pairingResult}</ReactMarkdown></p>
+            </div>
+          )}
+        </div>
       </div>
       
       <style jsx global>{`
