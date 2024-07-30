@@ -2,7 +2,6 @@
 
 import React, { useState } from "react";
 import ReactMarkdown from "react-markdown";
-import styles from './styles/top.module.css';
 
 const Page: React.FC = () => {
   const [alcoholType, setAlcoholType] = useState<string>('');
@@ -64,9 +63,14 @@ const Page: React.FC = () => {
     }, 30);
   };
 
+  const YozakuraJP: React.CSSProperties = {
+    fontFamily: 'YozakuraJP',
+    letterSpacing: '0.3em'
+  };
+
   return (
     <div className="bg-white min-h-screen font-shippori-mincho text-black">
-      <h1 className="text-4xl text-center py-8 font-bold"><span className={styles.title}>日本独自のお酒ペアリングサービス</span></h1>
+      <h1 className="text-4xl text-center py-8 font-bold"><span style={YozakuraJP}>SAKE PAIRING</span></h1>
     
       
       <div className="max-w-2xl mx-auto px-4">

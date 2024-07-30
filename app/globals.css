@@ -3,7 +3,7 @@
 @tailwind utilities;
 
 @font-face {
-  font-family: 'YozakuraJP-Regular';
+  font-family: 'YozakuraJP';
   src: url('/fonts/YozakuraJP-Regular.otf') format('opentype');
   font-weight: normal;
   font-style: normal;
