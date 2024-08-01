@@ -9,6 +9,11 @@ const Page: React.FC = () => {
   const [dishImage, setDishImage] = useState<File>();
   const [pairingResult, setPairingResult] = useState<string>('');
   const [isLoading, setIsLoading] = useState<boolean>(false);
+
+  // テスト用 仮インプット
+  const [geminiType, setgGeminiType] = useState<string>('');
+  const [textInput, setTextInput] = useState<string>('');
+
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
       setDishImage(e.target.files[0]);
@@ -24,10 +29,13 @@ const Page: React.FC = () => {
 
     // formDataへdishName, dishImageを追加
     const formData = new FormData(); 
-    formData.append('text', `お酒の種類: ${alcoholType}, 料理: ${dishName || '画像あり'}. このお酒と料理の最適なペアリングを提案してください。必ず お酒の個別名 特徴 ペアリング理由をそれぞれ4つ出力。必ず全文を英語で出力してください。`);
+    // 元の文章　⇒　このお酒と料理の最適なペアリングを提案してください。必ず お酒の個別名 特徴 ペアリング理由をそれぞれ4つ出力。必ず全文を英語で出力してください。
+    formData.append('text', `お酒の種類: ${alcoholType}, 料理: ${dishName || '画像あり'}. ${textInput}`);
     if (dishImage) {
       formData.append('image', dishImage);
     }
+  
+    formData.append('geminiType', geminiType);
 
     setIsLoading(true);
 
@@ -115,6 +123,39 @@ const Page: React.FC = () => {
           <label className="block mb-2 text-lg">Dish picture:</label>
           <input type="file" name="dishImage" onChange={handleImageUpload} accept="image/*" className="w-full p-2 border border-gray-300 rounded bg-white" />
         </div>
+
+        {/* ここからテスト用 */}
+
+
+        <div className="mb-6">
+          <label className="block mb-2 text-lg">Step3: テスト用 Geminiのタイプとプロンプトを入力</label>
+          <div className="flex flex-col space-y-4">
+            <button 
+              onClick={() => setgGeminiType('gemini-1.5-pro')} 
+              className={`p-6 border border-black rounded text-2xl ${geminiType === 'gemini-1.5-pro' ? 'bg-black text-white' : 'bg-white text-black'} flex flex-col items-center justify-center`}
+            >
+              <div className="flex items-center mb-2">
+                <span>gemini-1.5-pro</span>
+              </div>
+            </button>
+            <button 
+              onClick={() => setgGeminiType('gemini-1.5-flash')} 
+              className={`p-6 border border-black rounded text-2xl ${geminiType === 'gemini-1.5-flash' ? 'bg-black text-white' : 'bg-white text-black'} flex flex-col items-center justify-center`}
+            >
+              <div className="flex items-center mb-2">
+                <span>gemini-1.5-flash</span>
+              </div>
+            </button>
+          </div>
+        </div>
+
+        <div className="mb-20">
+          <label className="block mb-2 text-lg">お酒の種類: {alcoholType}, 料理: {dishName || '画像あり'}.に続く文章を入力する</label>
+          <input type="text" name="textInput" onChange={(e) => setTextInput(e.target.value)} value={textInput} className="w-full p-2 border border-gray-300 rounded bg-white"  placeholder="ここにプロンプトをいれる" />
+        </div>
+
+
+        {/* ここまでテスト用 */}
         
         <button onClick={handlePairingStart} disabled={isLoading} className="w-full bg-black text-white mb-8 py-3 rounded text-2xl hover:bg-gray-800 transition duration-300">
           {isLoading ? 'Pairing in progress...' : 'Start pairing'}

@@ -7,7 +7,18 @@ export async function POST(req: Request) {
     const image_file = formData.get('image') as File;
 
     const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+
+    // テスト用
+    const gemini_type = formData.get('geminiType') as string;
+
+    let model;
+    if (gemini_type === 'gemini-1.5-pro') {
+        model = genAI.getGenerativeModel({ model: "gemini-1.5-pro" });
+    } else {
+        model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+    }
+
+    
 
     if (image_file) {
         // 画像をBase64エンコード
