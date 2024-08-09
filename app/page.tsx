@@ -10,10 +10,6 @@ const Page: React.FC = () => {
   const [pairingResult, setPairingResult] = useState<string>('');
   const [isLoading, setIsLoading] = useState<boolean>(false);
 
-  // テスト用 仮インプット
-  const [geminiType, setgGeminiType] = useState<string>('');
-  const [textInput, setTextInput] = useState<string>('');
-
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
       setDishImage(e.target.files[0]);
@@ -21,42 +17,51 @@ const Page: React.FC = () => {
   };
 
   const handlePairingStart = async () => {
+    // お酒の種類または料理名/画像のどちらかが入力されていない場合にエラー
     if (!alcoholType || (!dishName && !dishImage)) {
       setPairingResult('After selecting the type of alcoholic beverage, please enter the name of the dish or a picture of the dish.');
       scrollToElement("#pairngResult");
       return;
     }
 
-    // formDataへdishName, dishImageを追加
+    // GeminiApiに送信するデータを作成する
     const formData = new FormData(); 
-    // 元の文章　⇒　このお酒と料理の最適なペアリングを提案してください。必ず お酒の個別名 特徴 ペアリング理由をそれぞれ4つ出力。必ず全文を英語で出力してください。
-    formData.append('text', `お酒の種類: ${alcoholType}, 料理: ${dishName || '画像あり'}. ${textInput}`);
+    // プロンプト：テキスト
+    if (alcoholType === '日本酒') {
+      formData.append('text', `お酒の種類: ${alcoholType}, 料理: ${dishName || '添付画像'}. 必ず日本酒の種類、特徴、ペアリング理由をそれぞれ2つ出力。必ず全文をアメリカ英語で出力してください。`);
+    } else if (alcoholType === 'チューハイ') {
+      formData.append('text', `お酒の種類: ${alcoholType}, 料理: ${dishName || '添付画像'}. 必ずチューハイのフレーバーの種類 、フレーバーの特徴 、ペアリング理由をそれぞれ2つ出力。必ず全文をアメリカ英語で出力してください。`);
+    } else {
+      setPairingResult('An error has occurred.');
+      scrollToElement("#pairngResult");
+      return;
+    }
+
+    // プロンプト：画像
     if (dishImage) {
       formData.append('image', dishImage);
     }
   
-    formData.append('geminiType', geminiType);
-
+    // ペアリング開始ボタンをdisableする
     setIsLoading(true);
 
+    // GeminiApiとApi通信をする
     try {
       const response = await fetch('/api/gemini-api', {
         method: 'POST',
         body: formData
       });
       const data = await response.json();
-      let responseText = data.message.replace("/\*/g", "");
-      setPairingResult(responseText);
+      // let responseText = data.message.replace("/\*/g", "");
+      setPairingResult(data.message);
       scrollToElement("#pairngResult");
     } catch (error) {
-      console.error('Error:', error);
-      setPairingResult('ペアリング結果の取得に失敗しました。');
+      setPairingResult('Failed to acquire pairing results.');
       scrollToElement("#pairngResult");
     } finally {
+      // ペアリング開始ボタンのdisableを解除する
       setIsLoading(false);
     }
-
-    
   };
 
   const scrollToElement = (id: string) => {
@@ -71,6 +76,7 @@ const Page: React.FC = () => {
     }, 30);
   };
 
+  // タイトルのフォント定義
   const YozakuraJP_title: React.CSSProperties = {
     fontFamily: 'YozakuraJP',
     letterSpacing: '0.3em'
@@ -115,47 +121,14 @@ const Page: React.FC = () => {
         </div>
         
         <div className="mb-2">
-          <label className="block mb-2 text-lg">Step2: Attach the dish name or a picture of it.</label>
+          <label className="block mb-2 text-lg">Step2: Attach the dish name or a dish image.<br></br>Dish name:</label>
           <input type="text" name="dishName" onChange={(e) => setDishName(e.target.value)} value={dishName} className="w-full p-2 border border-gray-300 rounded bg-white"  placeholder="the dish name" />
         </div>
         
         <div className="mb-8">
-          <label className="block mb-2 text-lg">Dish picture:</label>
-          <input type="file" name="dishImage" onChange={handleImageUpload} accept="image/*" className="w-full p-2 border border-gray-300 rounded bg-white" />
+          <label className="block mb-2 text-lg">Dish image (The image should only show one item and be clear.)</label>
+          <input type="file" name="dishImage" onChange={handleImageUpload} accept="image/png, image/jpeg, image/webp, image/heic, image/heif" className="w-full p-2 border border-gray-300 rounded bg-white" />
         </div>
-
-        {/* ここからテスト用 */}
-
-
-        <div className="mb-6">
-          <label className="block mb-2 text-lg">Step3: テスト用 Geminiのタイプとプロンプトを入力</label>
-          <div className="flex flex-col space-y-4">
-            <button 
-              onClick={() => setgGeminiType('gemini-1.5-pro')} 
-              className={`p-6 border border-black rounded text-2xl ${geminiType === 'gemini-1.5-pro' ? 'bg-black text-white' : 'bg-white text-black'} flex flex-col items-center justify-center`}
-            >
-              <div className="flex items-center mb-2">
-                <span>gemini-1.5-pro</span>
-              </div>
-            </button>
-            <button 
-              onClick={() => setgGeminiType('gemini-1.5-flash')} 
-              className={`p-6 border border-black rounded text-2xl ${geminiType === 'gemini-1.5-flash' ? 'bg-black text-white' : 'bg-white text-black'} flex flex-col items-center justify-center`}
-            >
-              <div className="flex items-center mb-2">
-                <span>gemini-1.5-flash</span>
-              </div>
-            </button>
-          </div>
-        </div>
-
-        <div className="mb-20">
-          <label className="block mb-2 text-lg">お酒の種類: {alcoholType}, 料理: {dishName || '画像あり'}.に続く文章を入力する</label>
-          <input type="text" name="textInput" onChange={(e) => setTextInput(e.target.value)} value={textInput} className="w-full p-2 border border-gray-300 rounded bg-white"  placeholder="ここにプロンプトをいれる" />
-        </div>
-
-
-        {/* ここまでテスト用 */}
         
         <button onClick={handlePairingStart} disabled={isLoading} className="w-full bg-black text-white mb-8 py-3 rounded text-2xl hover:bg-gray-800 transition duration-300">
           {isLoading ? 'Pairing in progress...' : 'Start pairing'}
